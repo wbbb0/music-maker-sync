@@ -92,7 +92,8 @@ public class MidiHandler {
 
         @SuppressWarnings("FutureReturnValueIgnored")
         private static void submitAndCheck(Runnable r) {
-            Minecraft.getInstance().submit(r)
+            long captured = xerca.xercamusic.common.sync.SyncClock.now();
+            Minecraft.getInstance().submit(() -> InputTimestamp.run(captured, r))
                     .whenComplete((v, t) -> {
                         if (t != null) {
                             Mod.LOGGER.error("Midi controller task failed", t);

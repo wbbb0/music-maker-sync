@@ -1,27 +1,4 @@
 pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        maven {
-            name = 'NeoForged'
-            url = 'https://maven.neoforged.net/releases'
-        }
-        mavenCentral()
-    }
+ repositories { gradlePluginPortal(); maven { url = 'https://maven.neoforged.net/releases' } }
 }
-
-plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
-}
-
-rootProject.name = 'XercaMods'
-
-// Modules are included as they are ported to NeoForge. Un-ported modules still use
-// Fabric Loom and would fail to configure, so they are added back one at a time.
-include 'XercaCourt'
-include 'XercaCushion'
-include 'XercaOmniChest'
-include 'XercaBlocks'
-include 'XercaTools'
-include 'XercaFood'
-include 'XercaPaintMod'
-include 'XercaMusicMod'
+rootProject.name = 'music-maker-sync'

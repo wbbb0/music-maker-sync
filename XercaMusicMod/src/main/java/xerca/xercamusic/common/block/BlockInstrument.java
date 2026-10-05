@@ -30,7 +30,7 @@ public abstract class BlockInstrument extends Block {
 
     @Override
     public ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if (new Vec3(pos.getX() + 0.5, pos.getY() - 0.5, pos.getZ() + 0.5).distanceTo(player.position()) > 4) {
+        if (xerca.xercamusic.common.sync.AudioSpace.distance(level, Vec3.atCenterOf(pos), player.position()) > 16) {
             return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
         }
         ItemStack handStack = player.getItemInHand(hand);
@@ -43,7 +43,7 @@ public abstract class BlockInstrument extends Block {
 
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
-        if (new Vec3(pos.getX() + 0.5, pos.getY() - 0.5, pos.getZ() + 0.5).distanceTo(player.position()) > 4) {
+        if (xerca.xercamusic.common.sync.AudioSpace.distance(level, Vec3.atCenterOf(pos), player.position()) > 16) {
             return InteractionResult.PASS;
         }
         if (level.isClientSide) {

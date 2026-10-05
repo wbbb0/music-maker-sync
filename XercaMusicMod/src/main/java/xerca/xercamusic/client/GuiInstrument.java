@@ -47,6 +47,8 @@ public class GuiInstrument extends Screen {
     @Nullable
     private final BlockPos blockInsPos;
     private final MidiHandler midiHandler;
+    private final LiveClient.Sender live;
+    private boolean closed;
     private int guiBaseX = 45;
     private int guiBaseY = 80;
     private int octaveButtonX;
@@ -59,6 +61,28 @@ public class GuiInstrument extends Screen {
         this.noteSounds = new NoteSound[IItemInstrument.TOTAL_NOTES];
         this.midiHandler = new MidiHandler(this::playSound, this::stopSound);
         this.blockInsPos = blockInsPos;
+        this.live = new LiveClient.Sender(instrument, blockInsPos);
+    }
+
+    void pumpLive() { live.pump(); }
+
+    // Opt-in validation uses the same MIDI receiver and input queue as a real keyboard.
+    void diagnosticMidi() {
+        if (!Boolean.getBoolean("xercamusic.syncDiagnostics")) return;
+        var receiver = midiHandler.new MidiInputReceiver("validation");
+        Thread worker = new Thread(() -> {
+            try {
+                for (int i=0; i<48; i++) {
+                    int key=60+i%12;
+                    receiver.send(new javax.sound.midi.ShortMessage(0x90,key,100),-1);
+                    Thread.sleep(17);
+                    receiver.send(new javax.sound.midi.ShortMessage(0x80,key,0),-1);
+                    Thread.sleep(17);
+                }
+            } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            catch (javax.sound.midi.InvalidMidiDataException e) { Mod.LOGGER.error("Validation MIDI",e); }
+        }, "music-sync-validation");
+        worker.setDaemon(true);worker.start();
     }
 
     @Override
@@ -174,19 +198,20 @@ public class GuiInstrument extends Screen {
     private void playSound(MidiHandler.MidiData data) {
         int noteId = data.noteId();
 
-        if (noteId >= 0 && noteId < buttonPushStates.length && !buttonPushStates[noteId]) {
+        if (!closed && noteId >= 0 && noteId < buttonPushStates.length && !buttonPushStates[noteId]) {
             int note = IItemInstrument.idToNote(noteId);
 
             IItemInstrument.InsSound noteSound = instrument.getSound(note);
             if (noteSound == null) {
                 return;
             }
-            noteSounds[noteId] = ModClient.playNote(noteSound.sound(), player.getX(), player.getY(), player.getZ(), data.volume(), noteSound.pitch());
+            var origin = blockInsPos == null ? player.position() : net.minecraft.world.phys.Vec3.atCenterOf(blockInsPos);
+            noteSounds[noteId] = ModClient.playNote(noteSound.sound(), origin.x, origin.y, origin.z, blockInsPos == null ? net.minecraft.sounds.SoundSource.PLAYERS : net.minecraft.sounds.SoundSource.BLOCKS, data.volume(), noteSound.pitch(), (byte)-1);
+            noteSounds[noteId].follow(player, blockInsPos);
             player.level().addParticle(ParticleTypes.NOTE, player.getX(), player.getY() + 2.2D, player.getZ(), note / 24.0D, 0.0D, 0.0D);
             buttonPushStates[noteId] = true;
 
-            SingleNotePacket pack = new SingleNotePacket(note, instrument, false, data.volume());
-            sendToServer(pack);
+            live.note(noteId, data.volume(), false);
         }
     }
 
@@ -196,9 +221,7 @@ public class GuiInstrument extends Screen {
             noteSounds[noteId] = null;
             buttonPushStates[noteId] = false;
 
-            int note = IItemInstrument.idToNote(noteId);
-            SingleNotePacket pack = new SingleNotePacket(note, instrument, true, 1f);
-            sendToServer(pack);
+            live.note(noteId, 0f, true);
         }
     }
 
@@ -291,6 +314,10 @@ public class GuiInstrument extends Screen {
 
     @Override
     public void removed() {
+        if (closed) return;
+        stopAllSounds();
+        live.close();
+        closed = true;
         midiHandler.closeDevices();
     }
 }

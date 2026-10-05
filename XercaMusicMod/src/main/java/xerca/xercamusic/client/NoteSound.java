@@ -13,6 +13,14 @@ public class NoteSound extends AbstractSoundInstance implements TickableSoundIns
     private final float originalPitch;
     private float dynamicVolume = -1f;  // -1 means no dynamic override
 
+    private net.minecraft.world.entity.player.Player owner;
+    private net.minecraft.core.BlockPos blockOrigin;
+    public void follow(net.minecraft.world.entity.player.Player player, net.minecraft.core.BlockPos block) { owner=player; blockOrigin=block; updateOrigin(); }
+    private void updateOrigin() {
+        if(owner==null)return;
+        if(owner.isRemoved() || (blockOrigin!=null && (!owner.level().hasChunkAt(blockOrigin) || !(owner.level().getBlockState(blockOrigin).getBlock() instanceof xerca.xercamusic.common.block.BlockInstrument)))) { if(remainingTicks<0)stopSound(); return; }
+        var pos=blockOrigin==null?owner.position():net.minecraft.world.phys.Vec3.atCenterOf(blockOrigin); x=pos.x; y=pos.y; z=pos.z;
+    }
     private boolean donePlaying;
     private int remainingTicks = -1;
 
@@ -81,6 +89,7 @@ public class NoteSound extends AbstractSoundInstance implements TickableSoundIns
 
     @Override
     public void tick() {
+        updateOrigin();
         if (remainingTicks == 0) {
             donePlaying = true;
             remainingTicks = -1;

@@ -42,6 +42,7 @@ public class Mod {
         modEventBus.addListener(this::onRegisterPayloads);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::onLootTableLoad);
+        xerca.xercamusic.common.sync.LiveServer.init();
         LOGGER.info("{} initialized", MODID);
     }
 
@@ -80,7 +81,8 @@ public class Mod {
     }
 
     private void onRegisterPayloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        var registrar = event.registrar("2");
+        xerca.xercamusic.common.sync.LiveNetwork.register(registrar);
         registrar.playToClient(ExportMusicPacket.PACKET_ID, ExportMusicPacket.PACKET_CODEC, ExportMusicPacketHandler::handle);
         registrar.playToClient(ImportMusicPacket.PACKET_ID, ImportMusicPacket.PACKET_CODEC, ImportMusicPacketHandler::handle);
         registrar.playToClient(MusicBoxUpdatePacket.PACKET_ID, MusicBoxUpdatePacket.PACKET_CODEC, MusicBoxUpdatePacketHandler::handle);
@@ -92,7 +94,7 @@ public class Mod {
         registrar.playToServer(MusicEndedPacket.PACKET_ID, MusicEndedPacket.PACKET_CODEC, MusicEndedPacketHandler::handle);
         registrar.playToServer(ImportMusicSendPacket.PACKET_ID, ImportMusicSendPacket.PACKET_CODEC, ImportMusicSendPacketHandler::handle);
         registrar.playToServer(MusicDataRequestPacket.PACKET_ID, MusicDataRequestPacket.PACKET_CODEC, MusicDataRequestPacketHandler::handle);
-        registrar.playToServer(SingleNotePacket.PACKET_ID, SingleNotePacket.PACKET_CODEC, SingleNotePacketHandler::handle);
+
         registrar.playToServer(SendNotesPartToServerPacket.PACKET_ID, SendNotesPartToServerPacket.PACKET_CODEC, SendNotesPartToServerPacketHandler::handle);
     }
 

@@ -18,7 +18,7 @@ config = "xercamusic.mixins.json"
 [[dependencies.${ mod_id }]]
 modId = "neoforge"
 type = "required"
-versionRange = "[${neo_version},)"
+versionRange = "[${neo_version}]"
 ordering = "NONE"
 side = "BOTH"
 
@@ -27,4 +27,11 @@ modId = "minecraft"
 type = "required"
 versionRange = "${minecraft_version_range}"
 ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.xercamusic]]
+modId = "sable"
+type = "optional"
+versionRange = "[2.0.5]"
+ordering = "AFTER"
 side = "BOTH"
